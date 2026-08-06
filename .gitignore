@@ -1,5 +1,26 @@
+# Python
 venv/
+.venv/
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+build/
+dist/
+
+# Environment / secrets
 .env
+
+# Vector store (persisted locally, rebuilt from source PDFs)
 chroma_db/
+
+# Uploaded / working PDFs
+data/*.pdf
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Model cache (sentence-transformers downloads)
+.cache/
