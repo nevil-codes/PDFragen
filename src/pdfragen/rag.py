@@ -83,6 +83,7 @@ def answer(
     config: Config | None = None,
     vectorstore=None,
     llm: ChatOllama | None = None,
+    language: str | None = None,
 ) -> Answer:
     """Answer ``question`` by retrieving context and calling the local LLM.
 
@@ -91,6 +92,8 @@ def answer(
         config: Configuration; falls back to :func:`get_config`.
         vectorstore: Store to search; falls back to :func:`get_vectorstore`.
         llm: Chat model to call; falls back to a configured :class:`ChatOllama`.
+        language: If set (e.g. ``"English"``, ``"Deutsch"``), forces the
+            answer language instead of matching the question's language.
 
     Returns:
         The generated answer along with the chunks it cites as sources.
@@ -109,11 +112,14 @@ def answer(
 
     model = llm or _get_llm(cfg)
     prompt = _build_prompt(question, chunks)
+    system_prompt = _SYSTEM_PROMPT
+    if language:
+        system_prompt += f" Always answer in {language}, regardless of the question's language."
 
     try:
         response = model.invoke(
             [
-                ("system", _SYSTEM_PROMPT),
+                ("system", system_prompt),
                 ("human", prompt),
             ]
         )

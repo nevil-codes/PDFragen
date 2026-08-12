@@ -45,19 +45,44 @@ Requires Python 3.11+ and [Ollama](https://ollama.com) installed locally.
 
 ## Usage
 
-_(Milestones land incrementally — see commit history.)_
+Make sure Ollama is running (`ollama serve`), then launch the app:
 
-- CLI ingestion / retrieval — _coming next_
-- Streamlit app — _coming later_
+```bash
+streamlit run app.py
+```
+
+Upload a PDF in the sidebar, wait for indexing, and ask away. Each answer has
+a **Sources** expander showing the exact passages and page numbers it was
+drawn from. The sidebar's language toggle forces answers into English or
+German; on *Auto* the answer matches the question's language.
+
+Each uploaded document is indexed into its own collection, scoped to the
+browser session — re-uploading the same file reuses the existing index instead
+of re-embedding it.
+
+### CLI
+
+The pipeline stages are also runnable standalone, useful for inspecting
+behaviour without the UI:
+
+```bash
+python -m pdfragen.ingestion path/to/dokument.pdf    # chunk stats
+python -m pdfragen.vectorstore path/to/dokument.pdf  # chunk + embed + store
+python -m pdfragen.rag "Wie lange habe ich Zeit?"    # retrieve + answer
+```
 
 ## Project structure
 
 ```
 PDFragen/
-├── src/pdfragen/      # library code
-│   └── config.py      # env-driven configuration
-├── tests/             # unit tests
-├── examples/          # sample PDF for reviewers to try
+├── app.py               # Streamlit chat UI
+├── src/pdfragen/        # library code
+│   ├── config.py        # env-driven configuration
+│   ├── ingestion.py     # PDF loading + German-aware chunking
+│   ├── vectorstore.py   # embeddings + persistent ChromaDB
+│   └── rag.py           # retrieval + Ollama generation
+├── tests/               # unit tests
+├── examples/            # sample PDF for reviewers to try
 ├── requirements.txt
 ├── pyproject.toml
 └── .env.example
