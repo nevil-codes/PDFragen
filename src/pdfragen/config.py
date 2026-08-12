@@ -18,8 +18,8 @@ load_dotenv()
 class Config:
     """Runtime configuration for the RAG pipeline."""
 
-    # LLM (generation)
-    openai_api_key: str | None
+    # LLM (generation, local via Ollama)
+    ollama_base_url: str
     llm_model: str
 
     # Embeddings (local)
@@ -44,9 +44,11 @@ def get_config() -> Config:
         A frozen ``Config`` snapshot for the current process.
     """
     return Config(
-        openai_api_key=os.getenv("OPENAI_API_KEY"),
-        llm_model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
-        embedding_model=os.getenv("EMBEDDING_MODEL", "intfloat/multilingual-e5-base"),
+        ollama_base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+        llm_model=os.getenv("LLM_MODEL", "llama3.1:8b"),
+        embedding_model=os.getenv(
+            "EMBEDDING_MODEL", "paraphrase-multilingual-MiniLM-L12-v2"
+        ),
         chunk_size=int(os.getenv("CHUNK_SIZE", "1000")),
         chunk_overlap=int(os.getenv("CHUNK_OVERLAP", "200")),
         top_k=int(os.getenv("TOP_K", "4")),
