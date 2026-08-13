@@ -1,0 +1,137 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 7 0 R /F2 8 0 R >> >> /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 7 0 R /F2 8 0 R >> >> /Contents 6 0 R >>
+endobj
+5 0 obj
+<< /Length 1418 >>
+stream
+BT
+50 780 Td
+/F2 15 Tf 24 TL
+(Einführung in das Maschinelle Lernen) Tj T*
+/F2 12 Tf 19 TL
+(Vorlesung 4: Regularisierung und Überanpassung) Tj T*
+/F1 10 Tf 16 TL
+(Prof. Dr. Andreas Weber - Wintersemester 2026/27) Tj T*
+() Tj T*
+/F2 12 Tf 19 TL
+(1. Das Problem der Überanpassung) Tj T*
+/F1 10 Tf 16 TL
+() Tj T*
+/F1 11 Tf 17 TL
+(Ein Modell ist überangepasst \(englisch: overfitting\), wenn es die) Tj T*
+(Trainingsdaten sehr gut abbildet, auf neuen Daten jedoch schlecht) Tj T*
+(abschneidet. Das Modell hat dann nicht die zugrundeliegende) Tj T*
+(Struktur gelernt, sondern das Rauschen der Trainingsmenge) Tj T*
+(auswendig gelernt.) Tj T*
+/F1 10 Tf 16 TL
+() Tj T*
+/F1 11 Tf 17 TL
+(Typische Anzeichen sind ein sehr geringer Trainingsfehler bei) Tj T*
+(gleichzeitig hohem Validierungsfehler. Die Differenz zwischen) Tj T*
+(beiden nennt man die Generalisierungslücke.) Tj T*
+/F1 10 Tf 16 TL
+() Tj T*
+/F2 12 Tf 19 TL
+(2. Der Bias-Varianz-Kompromiss) Tj T*
+/F1 10 Tf 16 TL
+() Tj T*
+/F1 11 Tf 17 TL
+(Der erwartete Fehler eines Modells lässt sich zerlegen in:) Tj T*
+/F1 10 Tf 16 TL
+() Tj T*
+/F1 11 Tf 17 TL
+(  Gesamtfehler = Verzerrung^2 + Varianz + irreduzibles Rauschen) Tj T*
+/F1 10 Tf 16 TL
+() Tj T*
+/F1 11 Tf 17 TL
+(Ein zu einfaches Modell hat eine hohe Verzerrung \(Unteranpassung\),) Tj T*
+(ein zu komplexes Modell eine hohe Varianz \(Überanpassung\). Ziel) Tj T*
+(ist es, die Summe beider Terme zu minimieren.) Tj T*
+ET
+endstream
+endobj
+6 0 obj
+<< /Length 1594 >>
+stream
+BT
+50 780 Td
+/F2 12 Tf 19 TL
+(3. Regularisierungsverfahren) Tj T*
+/F1 10 Tf 16 TL
+() Tj T*
+/F2 11 Tf 17 TL
+(L2-Regularisierung \(Ridge\)) Tj T*
+/F1 11 Tf 17 TL
+(Addiert die quadrierte Summe der Gewichte zur Verlustfunktion.) Tj T*
+(Dies bestraft große Gewichte und führt zu glatteren Modellen.) Tj T*
+(Der Hyperparameter Lambda steuert die Stärke der Bestrafung.) Tj T*
+/F1 10 Tf 16 TL
+() Tj T*
+/F2 11 Tf 17 TL
+(L1-Regularisierung \(Lasso\)) Tj T*
+/F1 11 Tf 17 TL
+(Addiert die Summe der Betragswerte der Gewichte. Im Unterschied) Tj T*
+(zur L2-Regularisierung werden hier einzelne Gewichte exakt auf) Tj T*
+(null gesetzt, wodurch eine automatische Merkmalsauswahl) Tj T*
+(stattfindet.) Tj T*
+/F1 10 Tf 16 TL
+() Tj T*
+/F2 11 Tf 17 TL
+(Dropout) Tj T*
+/F1 11 Tf 17 TL
+(Während des Trainings werden zufällig ausgewählte Neuronen) Tj T*
+(deaktiviert, üblicherweise mit einer Wahrscheinlichkeit zwischen) Tj T*
+(0,2 und 0,5. Dadurch kann sich das Netz nicht auf einzelne) Tj T*
+(Neuronen verlassen. Beim Testen ist Dropout abgeschaltet.) Tj T*
+/F1 10 Tf 16 TL
+() Tj T*
+/F2 11 Tf 17 TL
+(Frühes Abbrechen \(Early Stopping\)) Tj T*
+/F1 11 Tf 17 TL
+(Das Training wird beendet, sobald der Validierungsfehler über) Tj T*
+(mehrere Epochen hinweg nicht mehr sinkt. Die Anzahl der) Tj T*
+(Epochen, die abgewartet wird, heißt Geduld \(patience\).) Tj T*
+/F1 10 Tf 16 TL
+() Tj T*
+/F2 12 Tf 19 TL
+(4. Prüfungsrelevante Hinweise) Tj T*
+/F1 10 Tf 16 TL
+() Tj T*
+/F1 11 Tf 17 TL
+(Die Herleitung der Bias-Varianz-Zerlegung ist klausurrelevant.) Tj T*
+(Übungsblatt 4 ist bis zum 15. Dezember 2026 abzugeben.) Tj T*
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+8 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+xref
+0 9
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000121 00000 n 
+0000000257 00000 n 
+0000000393 00000 n 
+0000001863 00000 n 
+0000003509 00000 n 
+0000003606 00000 n 
+trailer
+<< /Size 9 /Root 1 0 R >>
+startxref
+3708
+%%EOF

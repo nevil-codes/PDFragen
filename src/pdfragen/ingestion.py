@@ -13,9 +13,9 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from langchain_community.document_loaders import PyPDFLoader
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from pypdf import PdfReader
 
 from pdfragen.config import Config, get_config
 
@@ -35,16 +35,36 @@ def load_pdf(path: str | Path) -> list[Document]:
 
     Raises:
         FileNotFoundError: If ``path`` does not exist.
-        ValueError: If the file has no extractable text (e.g. scanned images).
+        ValueError: If the file is not a readable PDF, or has no extractable
+            text (e.g. scanned images).
     """
     pdf_path = Path(path)
     if not pdf_path.is_file():
         raise FileNotFoundError(f"PDF not found: {pdf_path}")
 
-    pages = PyPDFLoader(str(pdf_path)).load()
+    try:
+        reader = PdfReader(str(pdf_path))
+        pages = [
+            Document(
+                page_content=page.extract_text() or "",
+                metadata={"source": str(pdf_path), "page": number},
+            )
+            for number, page in enumerate(reader.pages)
+        ]
+    except Exception as exc:
+        # pypdf raises a variety of parse errors (PdfStreamError, PdfReadError,
+        # ...) for damaged or non-PDF files. Collapse them into one clear error.
+        raise ValueError(
+            f"Could not read {pdf_path.name} as a PDF. The file may be damaged, "
+            f"encrypted, or not a PDF at all."
+        ) from exc
+
+    if not pages:
+        raise ValueError(f"{pdf_path.name} contains no pages.")
     if not any(page.page_content.strip() for page in pages):
         raise ValueError(
-            f"No extractable text in {pdf_path}. Is it a scanned/image-only PDF?"
+            f"No extractable text in {pdf_path.name}. Is it a scanned/image-only "
+            f"PDF? Text-based PDFs work; scanned images would need OCR."
         )
     return pages
 

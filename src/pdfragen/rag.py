@@ -13,6 +13,7 @@ from __future__ import annotations
 import sys
 from dataclasses import dataclass
 
+import httpx
 from langchain_core.documents import Document
 from langchain_ollama import ChatOllama
 
@@ -20,14 +21,23 @@ from pdfragen.config import Config, get_config
 from pdfragen.vectorstore import get_vectorstore
 
 _SYSTEM_PROMPT = """You are a helpful assistant answering questions about a document \
-for an international student in Germany. Answer in the same language as the \
-question (English or German). Base your answer only on the provided excerpts; \
-if the excerpts don't contain the answer, say so plainly instead of guessing."""
+for an international student in Germany. Base your answer only on the provided \
+excerpts; if the excerpts don't contain the answer, say so plainly instead of \
+guessing.
 
+LANGUAGE RULE: the excerpts are in German, but your answer must match the \
+language of the QUESTION, not the language of the excerpts. If the question is \
+in English, answer entirely in English and translate any German terms you quote. \
+If the question is in German, answer in German."""
+
+# The language reminder is repeated after the question because the excerpts are
+# German: without it, smaller models tend to answer in the document's language.
 _PROMPT_TEMPLATE = """Document excerpts:
 {context}
 
 Question: {question}
+
+Remember: answer in the same language as the question above.
 
 Answer:"""
 
@@ -76,6 +86,37 @@ def _build_prompt(question: str, chunks: list[Document]) -> str:
 def _get_llm(config: Config | None = None) -> ChatOllama:
     cfg = config or get_config()
     return ChatOllama(model=cfg.llm_model, base_url=cfg.ollama_base_url)
+
+
+def check_ollama(config: Config | None = None) -> str | None:
+    """Check that Ollama is reachable and the configured model is available.
+
+    Lets the UI warn up front rather than failing on the first question.
+
+    Args:
+        config: Configuration; falls back to :func:`get_config`.
+
+    Returns:
+        ``None`` if everything is ready, otherwise a human-readable problem
+        description suitable for display.
+    """
+    cfg = config or get_config()
+    try:
+        response = httpx.get(f"{cfg.ollama_base_url}/api/tags", timeout=3.0)
+        response.raise_for_status()
+    except Exception:
+        return (
+            f"Can't reach Ollama at {cfg.ollama_base_url}. "
+            f"Start it with `ollama serve`."
+        )
+
+    installed = {m.get("name", "") for m in response.json().get("models", [])}
+    if cfg.llm_model not in installed:
+        return (
+            f"Ollama is running, but the model '{cfg.llm_model}' isn't installed. "
+            f"Pull it with `ollama pull {cfg.llm_model}`."
+        )
+    return None
 
 
 def answer(

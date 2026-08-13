@@ -15,7 +15,7 @@ from pathlib import Path
 import streamlit as st
 
 from pdfragen.config import get_config
-from pdfragen.rag import answer
+from pdfragen.rag import answer, check_ollama
 from pdfragen.vectorstore import add_chunks, get_vectorstore
 from pdfragen.ingestion import ingest
 
@@ -45,6 +45,10 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 cfg = get_config()
+
+ollama_problem = check_ollama(cfg)
+if ollama_problem:
+    st.warning(f"⚠️ {ollama_problem}", icon=None)
 
 
 def _ingest_upload(file) -> None:
@@ -81,7 +85,11 @@ if uploaded_file is not None:
     try:
         _ingest_upload(uploaded_file)
     except ValueError as exc:
+        # Unreadable, empty, or image-only PDF — the message explains which.
         st.error(str(exc))
+        st.stop()
+    except Exception as exc:  # noqa: BLE001 - last resort, keep the UI usable
+        st.error(f"Could not index {uploaded_file.name}: {exc}")
         st.stop()
 
 for message in st.session_state.messages:
