@@ -63,6 +63,10 @@ A few decisions a reviewer might reasonably ask about:
 - **Why hash-based chunk ids?** Re-uploading the same document overwrites its
   chunks instead of duplicating them, which would otherwise skew retrieval
   toward whatever had been ingested twice.
+- **Why keep styling in its own module?** [`theme.py`](src/pdfragen/theme.py)
+  holds the palette, type scale and CSS so `app.py` reads as layout and state
+  rather than a wall of style strings — and so a visual change never risks
+  touching the pipeline.
 
 ## Stack
 
@@ -96,10 +100,14 @@ Make sure Ollama is running (`ollama serve`), then launch the app:
 streamlit run app.py
 ```
 
-Upload a PDF in the sidebar, wait for indexing, and ask away. Each answer has
-a **Sources** expander showing the exact passages and page numbers it was
-drawn from. The sidebar's language toggle forces answers into English or
-German; on *Auto* the answer matches the question's language.
+Drop a PDF on the landing screen, wait for indexing, and ask away.
+
+Every answer is followed by citation pills — one per cited page, badged `p. 2`
+for an English answer and `S. 2` for a German one — and an expander holding the
+passages those pages were drawn from, so any claim can be checked against the
+document. Each message carries an EN/DE chip showing the language it was
+handled in. The sidebar's language control forces answers into English or
+German; on *Auto* the answer matches the question.
 
 Each uploaded document is indexed into its own collection, scoped to the
 browser session — re-uploading the same file reuses the existing index instead
@@ -138,7 +146,9 @@ PDFragen/
 │   ├── config.py        # env-driven configuration
 │   ├── ingestion.py     # PDF loading + German-aware chunking
 │   ├── vectorstore.py   # embeddings + persistent ChromaDB
-│   └── rag.py           # retrieval + Ollama generation
+│   ├── rag.py           # retrieval + Ollama generation
+│   └── theme.py         # design tokens + injected CSS for the UI
+├── .streamlit/          # native Streamlit theming
 ├── tests/               # unit tests
 ├── examples/            # sample German PDFs + the script that builds them
 ├── requirements.txt
@@ -158,6 +168,11 @@ Worth being explicit about, since they shape what this does and doesn't do:
   `LLM_MODEL` noticeably improves multi-step questions.
 - **No conversational memory.** Each question is retrieved and answered
   independently; follow-ups like "and what about the other one?" won't resolve.
+- **One document at a time.** Uploading a new PDF replaces the indexed one
+  rather than adding to it; questions can't span two documents.
+- **It runs where Ollama runs.** That rules out zero-config hosts like
+  Streamlit Community Cloud — the model is several GB and needs a local
+  daemon. Demoing it means running it locally or recording it.
 - **Chunking is character-based.** It respects paragraph and sentence
   boundaries, but a table split across a chunk boundary can still lose context.
 - **This is not legal advice.** It helps read a document; it does not tell
