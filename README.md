@@ -8,6 +8,21 @@ pages.
 
 > **Fragen** is German for "questions" — PDFragen = "PDF questions".
 
+## Architecture
+
+Fully local RAG pipeline — no paid API required.
+
+```mermaid
+flowchart TD
+    A[German PDF upload] --> B[Chunking]
+    B --> C[Embeddings<br/>multilingual sentence-transformers]
+    C --> D[(ChromaDB<br/>local vector store)]
+    E[Student question<br/>EN or DE] --> F[Retrieval]
+    D --> F
+    F --> G[Ollama<br/>llama3.1:8b, local]
+    G --> H[Streamlit UI<br/>answer + citations]
+```
+
 ## Who this is for
 
 An international student in Germany opens a letter from the Ausländerbehörde.
@@ -130,22 +145,6 @@ PDFragen/
 ├── pyproject.toml
 └── .env.example
 ```
-
-## Architecture
-
-```
-   PDF ──► load_pdf ──► chunk_documents ──► embed ──► ChromaDB
-   (pypdf)   per page      German-aware     (MiniLM)  (persisted)
-                           separators                      │
-                                                           │ top-k
-   Answer ◄── ChatOllama ◄── prompt + context ◄── similarity_search
-   + pages     llama3.1:8b                             ▲
-                                                       │
-                                              question (EN or DE)
-```
-
-Page numbers ride along in each chunk's metadata from `load_pdf` all the way to
-the citation shown under an answer.
 
 ## Limitations
 
