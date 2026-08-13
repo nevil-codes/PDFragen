@@ -1,0 +1,20 @@
+[theme]
+# Pin the light palette so the app doesn't flip with the OS colour scheme —
+# the design is a single warm-paper look in both.
+base = "light"
+primaryColor = "#2F5D5B"
+backgroundColor = "#FDFCFA"
+secondaryBackgroundColor = "#F5F2EC"
+textColor = "#1D2321"
+font = "sans serif"
+
+[client]
+# Drops the Deploy button and dev toolbar — this app needs a local Ollama, so
+# Streamlit Community Cloud deployment would produce a broken instance.
+toolbarMode = "minimal"
+
+[server]
+maxUploadSize = 25
+
+[browser]
+gatherUsageStats = false
