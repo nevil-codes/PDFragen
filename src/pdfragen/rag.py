@@ -20,15 +20,24 @@ from langchain_ollama import ChatOllama
 from pdfragen.config import Config, get_config
 from pdfragen.vectorstore import get_vectorstore
 
-_SYSTEM_PROMPT = """You are a helpful assistant answering questions about a document \
+_BASE_SYSTEM_PROMPT = """You are a helpful assistant answering questions about a document \
 for an international student in Germany. Base your answer only on the provided \
 excerpts; if the excerpts don't contain the answer, say so plainly instead of \
-guessing.
+guessing."""
 
-LANGUAGE RULE: the excerpts are in German, but your answer must match the \
+_LANGUAGE_RULE = """LANGUAGE RULE: the excerpts are in German, but your answer must match the \
 language of the QUESTION, not the language of the excerpts. If the question is \
 in English, answer entirely in English and translate any German terms you quote. \
 If the question is in German, answer in German."""
+
+_SYSTEM_PROMPT = f"{_BASE_SYSTEM_PROMPT}\n\n{_LANGUAGE_RULE}"
+
+_PLAIN_TEMPLATE = """Document excerpts:
+{context}
+
+Question: {question}
+
+Answer:"""
 
 # The language reminder is repeated after the question because the excerpts are
 # German: without it, smaller models tend to answer in the document's language.
@@ -40,6 +49,16 @@ Question: {question}
 Remember: answer in the same language as the question above.
 
 Answer:"""
+
+# Prompt variants compared by the evaluation harness (eval/run_generation.py).
+# Each maps to (system prompt, human prompt template). "repeated" is what the
+# app uses.
+PROMPT_VARIANTS: dict[str, tuple[str, str]] = {
+    "plain": (_BASE_SYSTEM_PROMPT, _PLAIN_TEMPLATE),
+    "once": (_SYSTEM_PROMPT, _PLAIN_TEMPLATE),
+    "repeated": (_SYSTEM_PROMPT, _PROMPT_TEMPLATE),
+}
+DEFAULT_PROMPT_VARIANT = "repeated"
 
 
 @dataclass(frozen=True)
@@ -76,11 +95,13 @@ def retrieve(
     return store.similarity_search(question, k=cfg.top_k)
 
 
-def _build_prompt(question: str, chunks: list[Document]) -> str:
+def _build_prompt(
+    question: str, chunks: list[Document], template: str = _PROMPT_TEMPLATE
+) -> str:
     context = "\n\n".join(
         f"[page {c.metadata.get('page', '?')}] {c.page_content}" for c in chunks
     )
-    return _PROMPT_TEMPLATE.format(context=context, question=question)
+    return template.format(context=context, question=question)
 
 
 def _get_llm(config: Config | None = None) -> ChatOllama:
@@ -144,16 +165,47 @@ def answer(
     """
     cfg = config or get_config()
     chunks = retrieve(question, cfg, vectorstore)
+    return generate(question, chunks, cfg, llm=llm, language=language)
 
+
+def generate(
+    question: str,
+    chunks: list[Document],
+    config: Config | None = None,
+    llm: ChatOllama | None = None,
+    language: str | None = None,
+    prompt_variant: str = DEFAULT_PROMPT_VARIANT,
+) -> Answer:
+    """Answer ``question`` from already-retrieved ``chunks`` with the local LLM.
+
+    Separated from :func:`answer` so the evaluation harness can hold the
+    retrieved context fixed while varying the model and prompt.
+
+    Args:
+        question: User question, in English or German.
+        chunks: Context chunks, e.g. from :func:`retrieve`.
+        config: Configuration; falls back to :func:`get_config`.
+        llm: Chat model to call; falls back to a configured :class:`ChatOllama`.
+        language: If set, forces the answer language (see :func:`answer`).
+        prompt_variant: Key of :data:`PROMPT_VARIANTS`.
+
+    Returns:
+        The generated answer along with the chunks it cites as sources.
+
+    Raises:
+        ConnectionError: If Ollama isn't reachable at the configured base URL.
+        KeyError: If ``prompt_variant`` is unknown.
+    """
+    cfg = config or get_config()
     if not chunks:
         return Answer(
             text="I couldn't find anything relevant in the document for that question.",
             sources=[],
         )
 
+    system_prompt, template = PROMPT_VARIANTS[prompt_variant]
     model = llm or _get_llm(cfg)
-    prompt = _build_prompt(question, chunks)
-    system_prompt = _SYSTEM_PROMPT
+    prompt = _build_prompt(question, chunks, template)
     if language:
         system_prompt += f" Always answer in {language}, regardless of the question's language."
 
