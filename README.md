@@ -137,6 +137,98 @@ python -m pdfragen.vectorstore path/to/dokument.pdf  # chunk + embed + store
 python -m pdfragen.rag "Wie lange habe ich Zeit?"    # retrieve + answer
 ```
 
+## Evaluation
+
+An evaluation harness for the research questions behind *Cross-Lingual RAG on
+German Administrative Documents with Small Local Models*:
+
+- **RQ1 (retrieval):** is retrieval worse for English questions than for
+  German ones over German documents? It compares
+  `paraphrase-multilingual-MiniLM-L12-v2`, `intfloat/multilingual-e5-base` and
+  `BAAI/bge-m3`, plus a baseline that translates the English question to
+  German with the local LLM first. Reports Recall@1/3/5 and MRR.
+- **RQ2 (answer language):** how often do local Ollama models answer in the
+  context's language (German) instead of the question's? It compares three prompt
+  variants: `plain` (no language instruction), `once` (rule in the system
+  prompt) and `repeated` (rule plus a reminder after the question, which is the app's default).
+
+### Setup
+
+```bash
+pip install -e ".[eval,dev]"          # adds pyyaml + lingua-language-detector
+ollama pull llama3.1:8b                # RQ2 and the translation baseline
+ollama pull mistral-nemo:12b           # RQ2
+```
+
+Embedding models download from Hugging Face on first use (bge-m3 is about 2.3 GB).
+Everything runs locally; the full grids fit comfortably in 24 GB of RAM.
+
+### Run
+
+```bash
+# RQ1: no Ollama needed
+python eval/run_retrieval.py --config eval/configs/retrieval.yaml
+# RQ1 with the EN->DE translation baseline (needs Ollama)
+python eval/run_retrieval.py --config eval/configs/retrieval.yaml --translate
+# RQ1 under the app's own chunking / per-document index
+python eval/run_retrieval.py --config eval/configs/retrieval_app_defaults.yaml
+
+# RQ2: needs Ollama with the configured models pulled
+python eval/run_generation.py --config eval/configs/generation.yaml
+python eval/run_generation.py --models llama3.1:8b --limit 3   # quick smoke test
+```
+
+Each run writes to `eval/results/<timestamp>-<name>/`:
+
+| File | Contents |
+| --- | --- |
+| `config.yaml` | the exact experiment config used |
+| `meta.json` | git commit (and dirty flag), Python/package versions, platform, command |
+| `per_query.csv` | one row per query (RQ1: gold page/chunk ranks; RQ2: full answer text, detected language, review flag, empty `faithful`/`notes` columns for hand-checking) |
+| `summary.csv` / `summary.md` | aggregate table with 95% CIs (bootstrap for RQ1, Wilson for RQ2) |
+| `paired_deltas.csv` | RQ1 only: paired MRR differences (EN − DE, translated − EN) |
+| `answers.jsonl` | RQ2 only: same rows as `per_query.csv`, easier to read |
+
+`eval/results/` is gitignored; `git add -f` the runs a paper table is built from.
+
+### Benchmark format
+
+`eval/benchmark/*.jsonl` has one question per line:
+
+```json
+{"id": "abh-02", "doc_file": "auslaenderbehoerde_verlaengerung.pdf", "gold_page": 1,
+ "question_en": "What is the latest date by which I have to apply for the extension?",
+ "question_de": "Bis wann muss ich die Verlängerung spätestens beantragen?",
+ "reference_answer": "By 5 September 2026, i.e. eight weeks before the permit expires.",
+ "gold_evidence": "bis zum 5. September 2026"}
+```
+
+`gold_page` is 1-indexed, as shown in a PDF viewer. `gold_evidence` is optional:
+a verbatim German span from the gold page that enables **chunk-level**
+scoring, where a hit is a retrieved chunk containing the span. `tests/test_benchmark.py`
+checks every span against the real PDF text. The seed set has 26 questions over the
+two sample PDFs.
+
+### Methodological notes
+
+- **The seed corpus is too small to separate embedders.** Each sample PDF has
+  2 pages, so page-level Recall@3 saturates and random Recall@1 is 0.25 even
+  on the pooled 4-page index. The main config therefore pools both documents
+  and uses 300-character chunks, and chunk-level scores are the more informative
+  numbers. Firm conclusions need more and longer real documents, added as
+  further JSONL files and PDFs.
+- **Detecting answer language is harder than it looks.** English answers quote German
+  terms, and lingua treats a single umlaut as decisive. The detector drops
+  quoted/parenthesised spans, transliterates umlauts, and cross-checks with an
+  EN/DE function-word vote. Disagreements are flagged `needs_review`.
+- **RQ2 holds context fixed.** Retrieval runs once per question and
+  language, so every model and prompt variant answers from identical excerpts.
+  Decoding is greedy (temperature 0, fixed seed).
+- **Question authoring bias.** German questions were paraphrased to avoid
+  copying document wording, but some lexical overlap remains and favours the DE
+  condition. English questions sometimes share loanwords with the documents
+  (e.g. *early stopping*).
+
 ## Project structure
 
 ```
@@ -147,8 +239,14 @@ PDFragen/
 │   ├── ingestion.py     # PDF loading + German-aware chunking
 │   ├── vectorstore.py   # embeddings + persistent ChromaDB
 │   ├── rag.py           # retrieval + Ollama generation
-│   └── theme.py         # design tokens + injected CSS for the UI
+│   ├── theme.py         # design tokens + injected CSS for the UI
+│   └── evaluation/      # benchmark loading, metrics, language detection, run I/O
 ├── .streamlit/          # native Streamlit theming
+├── eval/                # evaluation harness (see "Evaluation")
+│   ├── benchmark/       # JSONL questions with gold pages / evidence
+│   ├── configs/         # experiment grids (YAML)
+│   ├── run_retrieval.py # RQ1
+│   └── run_generation.py # RQ2
 ├── tests/               # unit tests
 ├── examples/            # sample German PDFs + the script that builds them
 ├── requirements.txt
