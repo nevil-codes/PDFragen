@@ -1,0 +1,25 @@
+# RQ2 grid: answer language of local Ollama models over German context.
+# Retrieval mirrors the app (per-document index, 1000/200 chunks, top-4) and
+# is done once per question, so every model/prompt sees identical context.
+name: generation
+benchmark:
+  - eval/benchmark/*.jsonl
+docs_dir: examples
+
+embedder: paraphrase-multilingual-MiniLM-L12-v2
+chunk_size: 1000
+chunk_overlap: 200
+top_k: 4
+
+models:                 # must be pulled: ollama pull <model>
+  - llama3.1:8b
+  - mistral-nemo:12b
+
+prompt_variants: [plain, once, repeated]   # keys of pdfragen.rag.PROMPT_VARIANTS
+question_languages: [en, de]               # de = control condition
+
+# Decoding: greedy + fixed seed for reproducibility.
+temperature: 0.0
+seed: 42
+num_ctx: 8192
+num_predict: 512
