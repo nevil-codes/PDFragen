@@ -19,6 +19,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0.0"]
+eval = ["pyyaml>=6.0", "lingua-language-detector>=2.0"]
 
 [build-system]
 requires = ["setuptools>=68"]

@@ -25,3 +25,6 @@ data/*.pdf
 
 # Model cache (sentence-transformers downloads)
 .cache/
+
+# Evaluation runs (force-add the runs a paper table is built from)
+eval/results/
