@@ -1,0 +1,30 @@
+# RQ1 main grid: cross-lingual retrieval over German documents.
+# Pooled corpus + small chunks so retrieval is non-trivial on short PDFs
+# (see eval/configs/retrieval_app_defaults.yaml for the app's own settings).
+name: retrieval
+benchmark:
+  - eval/benchmark/*.jsonl
+docs_dir: examples
+
+corpus: pooled          # pooled = one index over all documents; per_doc = one index per document
+chunk_size: 300
+chunk_overlap: 60
+top_n: 20               # retrieval depth; ranks beyond this count as misses
+ks: [1, 3, 5]
+
+embedders:
+  - paraphrase-multilingual-MiniLM-L12-v2
+  - intfloat/multilingual-e5-base
+  - BAAI/bge-m3
+
+conditions: [de, en]    # en_translated is added when translation is enabled
+
+translate:              # baseline: EN question -> German via local LLM, then retrieve
+  enabled: false        # or pass --translate
+  model: llama3.1:8b
+  temperature: 0.0
+  seed: 42
+
+bootstrap:
+  n_resamples: 2000
+  seed: 0

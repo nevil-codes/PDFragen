@@ -1,0 +1,30 @@
+# RQ1 under the app's own settings: one index per document, 1000/200 chunks.
+# On the 2-page example PDFs page-level recall saturates here; kept as a
+# reference point showing what the deployed configuration actually sees.
+name: retrieval-app-defaults
+benchmark:
+  - eval/benchmark/*.jsonl
+docs_dir: examples
+
+corpus: per_doc
+chunk_size: 1000
+chunk_overlap: 200
+top_n: 20               # retrieval depth; ranks beyond this count as misses
+ks: [1, 3, 5]
+
+embedders:
+  - paraphrase-multilingual-MiniLM-L12-v2
+  - intfloat/multilingual-e5-base
+  - BAAI/bge-m3
+
+conditions: [de, en]    # en_translated is added when translation is enabled
+
+translate:              # baseline: EN question -> German via local LLM, then retrieve
+  enabled: false        # or pass --translate
+  model: llama3.1:8b
+  temperature: 0.0
+  seed: 42
+
+bootstrap:
+  n_resamples: 2000
+  seed: 0
