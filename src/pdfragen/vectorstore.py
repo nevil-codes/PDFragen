@@ -20,6 +20,21 @@ from pdfragen.config import Config, get_config
 from pdfragen.ingestion import ingest
 
 
+# Per-model encoding settings. E5 models are trained with "query: " /
+# "passage: " prefixes and expect normalised vectors; BGE-M3 expects normalised
+# vectors. Models not listed here are used with sentence-transformers defaults.
+_EMBEDDING_PROFILES: dict[str, dict[str, dict]] = {
+    "intfloat/multilingual-e5-base": {
+        "encode_kwargs": {"prompt": "passage: ", "normalize_embeddings": True},
+        "query_encode_kwargs": {"prompt": "query: ", "normalize_embeddings": True},
+    },
+    "BAAI/bge-m3": {
+        "encode_kwargs": {"normalize_embeddings": True},
+        "query_encode_kwargs": {"normalize_embeddings": True},
+    },
+}
+
+
 def get_embeddings(config: Config | None = None) -> HuggingFaceEmbeddings:
     """Build the local multilingual embedding function.
 
@@ -28,10 +43,12 @@ def get_embeddings(config: Config | None = None) -> HuggingFaceEmbeddings:
 
     Returns:
         A ``HuggingFaceEmbeddings`` wrapper around the configured
-        sentence-transformers model, downloaded/cached on first use.
+        sentence-transformers model, downloaded/cached on first use, with any
+        model-specific prefixes/normalisation from ``_EMBEDDING_PROFILES``.
     """
     cfg = config or get_config()
-    return HuggingFaceEmbeddings(model_name=cfg.embedding_model)
+    profile = _EMBEDDING_PROFILES.get(cfg.embedding_model, {})
+    return HuggingFaceEmbeddings(model_name=cfg.embedding_model, **profile)
 
 
 def get_vectorstore(
