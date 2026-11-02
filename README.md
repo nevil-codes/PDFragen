@@ -248,11 +248,22 @@ PDFragen/
 │   ├── run_retrieval.py # RQ1
 │   └── run_generation.py # RQ2
 ├── tests/               # unit tests
-├── examples/            # sample German PDFs + the script that builds them
+├── examples/            # sample + attack PDFs, their generators, security check scripts
 ├── requirements.txt
 ├── pyproject.toml
 └── .env.example
 ```
+
+## Security
+
+Uploaded PDFs are untrusted input. [SECURITY_ASSESSMENT.md](SECURITY_ASSESSMENT.md)
+tests the app against the OWASP Top 10 for LLM Applications (2025) with
+crafted German PDFs: indirect prompt injection via hidden text, HTML injection
+through rendered passages and file names, data isolation between documents and
+sessions, and upload path traversal. It reports observed success rates before
+and after the fixes, the regression tests in `tests/test_security.py`, the
+fixes' effect on answer language, and the risks that remain — prompt-injection
+defences reduce the risk, they don't remove it.
 
 ## Limitations
 
