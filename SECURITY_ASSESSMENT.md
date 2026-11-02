@@ -76,6 +76,40 @@ accumulates documents by design, so the "leak" is the user's own data. It
 becomes a real issue (LLM08, cross-tenant leakage) only if that shared
 collection serves several users.
 
+## Answer quality after the fix
+
+The untrusted-data rule changes the system prompt of every prompt variant, so
+the RQ2 answer-language eval (`eval/run_generation.py`) was re-run on the
+commit before the security changes and on the commit with them: `llama3.1:8b`,
+26 benchmark questions per language, greedy decoding (temperature 0, seed 42),
+same detector and same retrieved context. `repeated` is the variant the app
+uses. Share of answers in the question's language, 95% Wilson CI in brackets:
+
+| Questions | Prompt | Before | After |
+|---|---|---|---|
+| English | plain | 0.69 [0.50, 0.83] | 0.85 [0.66, 0.94] |
+| English | once | 0.85 [0.66, 0.94] | 0.96 [0.81, 0.99] |
+| English | repeated | 0.85 [0.66, 0.94] | 0.88 [0.71, 0.96] |
+| German (control) | plain | 1.00 [0.87, 1.00] | 0.96 [0.81, 0.99] |
+| German (control) | once | 0.96 [0.81, 0.99] | 0.77 [0.58, 0.89] |
+| German (control) | repeated | 0.88 [0.71, 0.96] | 0.81 [0.62, 0.91] |
+
+- The effect goes both ways: more English questions are answered in English,
+  but more German questions are answered in English too (e.g. *"Wann endet
+  meine jetzige Aufenthaltserlaubnis?"* → *"Your current residence permit
+  expires on October 31, 2026."*, `once`).
+- Paired by question, `repeated`: English 2 fixed / 1 broken; German 1 fixed /
+  3 broken. All CIs overlap at n=26.
+- Answers mentioning the excerpts or the rule (*excerpt*, *Auszug*,
+  *untrusted*, …) rose from 7 to 82 of 156.
+- Mean latency for `repeated` rose from 1.21 s to 1.51 s (English) and from
+  1.13 s to 1.44 s (German).
+- Not measured: answer correctness (the `faithful` column is not hand-checked
+  yet) and the second model in the config (`mistral-nemo:12b`).
+
+Runs: `eval/results/20261102-140300-generation-prompt-before-security` and
+`eval/results/20261102-135831-generation-prompt-after-security` (git-ignored).
+
 ## Remaining risks and limitations
 
 - **Prompt-injection defences reduce, not eliminate, the risk.** A2b shows it:
@@ -88,8 +122,8 @@ collection serves several users.
   Markdown is). Whether a URL in a model answer becomes a clickable link was
   not tested.
 - Uploaded documents persist on disk indefinitely (see observation above).
-- The prompt change alters all eval prompt variants; earlier results from
-  `eval/run_generation.py` aren't directly comparable until it is re-run.
+- The new rule shifts answer language: German questions were answered in
+  German less often after the fix (see above).
 
 ## Next steps
 
@@ -99,5 +133,6 @@ collection serves several users.
    visible document, and check answers against the cited passages.
 3. Delete session directories (TTL or on session end).
 4. CLI: filter retrieval by `source` metadata if the collection is ever shared.
-5. Re-run the eval harness to measure answer-quality impact of the new prompt;
-   repeat this assessment with more runs and models.
+5. Fix the German-answer regression without weakening the rule (e.g. test the
+   rule's position and wording against RQ2), hand-check answer correctness,
+   and repeat this assessment with more runs and models.
