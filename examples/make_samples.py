@@ -19,15 +19,20 @@ def _escape(text: str) -> str:
     return text.replace("\\", r"\\").replace("(", r"\(").replace(")", r"\)")
 
 
-def _content_stream(lines: list[tuple[str, int, bool]]) -> str:
-    """Build a PDF text stream from (text, size, bold) lines."""
+def _content_stream(lines: list[tuple]) -> str:
+    """Build a PDF text stream from (text, size, bold[, rgb]) lines.
+
+    The optional ``rgb`` fill colour (e.g. ``"1 1 1"`` for white) is used by
+    make_attack_samples.py to hide text; it defaults to black.
+    """
     ops = ["BT", "50 780 Td"]
     current = None
-    for text, size, bold in lines:
+    for text, size, bold, *rgb in lines:
         font = "/F2" if bold else "/F1"
-        spec = (font, size)
+        colour = rgb[0] if rgb else "0 0 0"
+        spec = (font, size, colour)
         if spec != current:
-            ops.append(f"{font} {size} Tf {int(size * 1.6)} TL")
+            ops.append(f"{font} {size} Tf {max(int(size * 1.6), 1)} TL {colour} rg")
             current = spec
         ops.append(f"({_escape(text)}) Tj T*")
     ops.append("ET")

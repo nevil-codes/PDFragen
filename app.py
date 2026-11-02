@@ -9,6 +9,7 @@ and see answers grounded in the document with page citations. Run with:
 from __future__ import annotations
 
 import hashlib
+import html
 import re
 import tempfile
 from pathlib import Path
@@ -94,7 +95,7 @@ def render_sources(sources, filename: str, language: str) -> None:
         key=lambda page: (page == "?", page if page != "?" else 0),
     )
 
-    short = truncate_filename(filename)
+    short = html.escape(truncate_filename(filename))
     pills = "".join(
         f'<span class="pf-pill">'
         f'<span class="pf-pill-page">{page_label(page, language)}</span>'
@@ -111,7 +112,7 @@ def render_sources(sources, filename: str, language: str) -> None:
         for src in sources:
             st.markdown(
                 f'<div class="pf-passage-head">{page_label(src.page, language)}</div>'
-                f'<div class="pf-passage">{src.text.strip()}</div>',
+                f'<div class="pf-passage">{html.escape(src.text.strip())}</div>',
                 unsafe_allow_html=True,
             )
 
@@ -152,7 +153,8 @@ def ingest_upload(file) -> None:
     if st.session_state.ingested_hash == file_hash:
         return
 
-    pdf_path = Path(st.session_state.session_dir) / file.name
+    # .name drops any directory part, so "../../x.pdf" can't escape the session dir.
+    pdf_path = Path(st.session_state.session_dir) / Path(file.name).name
     pdf_path.write_bytes(file_bytes)
 
     session_cfg = cfg.__class__(
@@ -188,7 +190,7 @@ with st.sidebar:
     if st.session_state.doc_name:
         st.markdown(
             f'<div class="pf-doc-card">'
-            f'<div class="pf-doc-name">{st.session_state.doc_name}</div>'
+            f'<div class="pf-doc-name">{html.escape(st.session_state.doc_name)}</div>'
             f'<div class="pf-doc-meta">{st.session_state.doc_pages} pages · indexed</div>'
             f"</div>",
             unsafe_allow_html=True,
@@ -276,12 +278,12 @@ if st.session_state.ingested_hash is None:
             ingest_upload(uploaded_file)
         except ValueError as exc:
             # Unreadable, empty, or image-only PDF — the message says which.
-            st.markdown(f'<div class="pf-notice">{exc}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="pf-notice">{html.escape(str(exc))}</div>', unsafe_allow_html=True)
             st.stop()
         except Exception as exc:  # noqa: BLE001 - last resort, keep the UI usable
             st.markdown(
-                f'<div class="pf-notice">Could not index {uploaded_file.name}: '
-                f"{exc}</div>",
+                f'<div class="pf-notice">Could not index {html.escape(uploaded_file.name)}: '
+                f"{html.escape(str(exc))}</div>",
                 unsafe_allow_html=True,
             )
             st.stop()
@@ -292,19 +294,19 @@ else:
         try:
             ingest_upload(uploaded_file)
         except ValueError as exc:
-            st.markdown(f'<div class="pf-notice">{exc}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="pf-notice">{html.escape(str(exc))}</div>', unsafe_allow_html=True)
             st.stop()
         except Exception as exc:  # noqa: BLE001 - last resort, keep the UI usable
             st.markdown(
-                f'<div class="pf-notice">Could not index {uploaded_file.name}: '
-                f"{exc}</div>",
+                f'<div class="pf-notice">Could not index {html.escape(uploaded_file.name)}: '
+                f"{html.escape(str(exc))}</div>",
                 unsafe_allow_html=True,
             )
             st.stop()
 
     st.markdown(
         f'<div class="pf-docbar"><span class="pf-docbar-tag">PDF</span>'
-        f'<span class="pf-docbar-name">{st.session_state.doc_name}</span>'
+        f'<span class="pf-docbar-name">{html.escape(st.session_state.doc_name)}</span>'
         f'<span class="pf-docbar-meta">· {st.session_state.doc_pages} pages</span>'
         f"</div>",
         unsafe_allow_html=True,
