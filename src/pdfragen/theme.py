@@ -28,11 +28,20 @@ SERIF = "'Source Serif 4', Georgia, serif"
 SANS = "'IBM Plex Sans', system-ui, sans-serif"
 MONO = "'IBM Plex Mono', ui-monospace, monospace"
 
-FONT_IMPORT = (
-    "@import url('https://fonts.googleapis.com/css2?"
-    "family=Source+Serif+4:opsz,wght@8..60,400;8..60,600"
-    "&family=IBM+Plex+Sans:wght@400;500;600"
-    "&family=IBM+Plex+Mono:wght@400;500&display=swap');"
+# Self-hosted (static/fonts/, served by Streamlit static serving) so the page
+# makes no request to Google Fonts. Latin subset: covers German incl. „“ € §.
+_FONT_URL = "/app/static/fonts"
+_FONT_FACES = [
+    ("Source Serif 4", "400 600", "source-serif-4-variable.woff2"),
+    ("IBM Plex Sans", "400 600", "ibm-plex-sans-variable.woff2"),
+    ("IBM Plex Mono", "400", "ibm-plex-mono-400.woff2"),
+    ("IBM Plex Mono", "500", "ibm-plex-mono-500.woff2"),
+]
+FONT_IMPORT = "\n".join(
+    f"@font-face {{ font-family: '{family}'; font-style: normal; "
+    f"font-weight: {weight}; font-display: swap; "
+    f"src: url('{_FONT_URL}/{file}') format('woff2'); }}"
+    for family, weight, file in _FONT_FACES
 )
 
 
