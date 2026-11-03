@@ -8,6 +8,7 @@ license = { text = "MIT" }
 dependencies = [
     "langchain>=0.2.0",
     "langchain-ollama>=0.1.0",
+    "langchain-text-splitters>=0.2.0",
     "chromadb>=0.5.0",
     "langchain-chroma>=0.1.0",
     "sentence-transformers>=3.0.0",
