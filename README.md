@@ -1,5 +1,7 @@
 # PDFragen
 
+Not a developer? Start with the User Guide → [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
+
 A RAG (Retrieval-Augmented Generation) chatbot for international students in
 Germany. Upload a German-language document — a Studienbüro or Ausländerbehörde
 letter, lecture notes, whatever — ask questions about it in English or German,
