@@ -1,5 +1,12 @@
 # PDFragen User Guide
 
+> **Quick start (Mac)**
+> 1. Install [Python](https://www.python.org/downloads/) and [Ollama](https://ollama.com/download), then open Ollama.
+> 2. Download PDFragen (green **Code** button → **Download ZIP**) and unzip it.
+> 3. In the Terminal: `cd ~/Downloads/PDFragen-main && python3 -m venv venv && source venv/bin/activate && pip install . && ollama pull llama3.1:8b`
+> 4. Start it: `streamlit run app.py --server.address 127.0.0.1`
+> 5. Upload your PDF, ask a question, and check the cited pages. Full steps are in [section 3](#3-before-you-start).
+
 ## 1. What PDFragen does
 
 This guide is for people who have never used a terminal. You have a German
@@ -10,15 +17,19 @@ page numbers and the exact German sentences it used, so you can check them.
 
 ## 2. Your privacy
 
-PDFragen runs on your own computer. Your document is read, stored and answered
-on your machine. It is not uploaded to any website or AI company.
+PDFragen runs on your own computer. Your documents and your questions never
+leave it. They are not uploaded to any website or AI company.
 
 - **The AI runs on your computer.** It uses **Ollama**, a free program that runs
   AI models on your own computer instead of on the internet.
 - **You need the internet for setup and for your first upload**, to download
-  the programs and two AI models. Your documents are never sent anywhere.
-- **Small exception:** the app page loads its fonts from Google Fonts. Google
-  can see that you opened the app, but not your document or your questions.
+  the programs and two AI models.
+- **The app page loads nothing from the internet.** Even its fonts are stored
+  in the PDFragen folder.
+- **One small check:** when you upload your first document after starting the
+  app, PDFragen asks huggingface.co (the website it downloaded one of its AI
+  models from) whether that model has changed. Only the model's name is sent,
+  never your files or questions.
 - **Start the app with the command in step 7 below.** It includes
   `--server.address 127.0.0.1`. Without this part, other people on the same
   Wi-Fi (for example in a student dorm) could open your PDFragen page.
@@ -31,9 +42,8 @@ These steps were tested on a Mac. Windows and Linux need different commands,
 and those are not covered here. You need about **8 GB of free disk space**.
 While it answers, the AI model uses about 5 GB of memory (RAM).
 
-**How long it takes:** you download about 7 GB in total. The AI model is the
-biggest part (4.9 GB). On a normal home connection, expect roughly 15 to 30
-minutes. On slow Wi-Fi it can take over an hour. You only do this once.
+**How long it takes:** the download is about 7 GB, usually 15–30 minutes
+depending on your internet. You only do this once.
 
 1. **Install Python** (the language PDFragen is written in). Download it from
    [python.org/downloads](https://www.python.org/downloads/) and run the installer.
