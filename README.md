@@ -84,8 +84,8 @@ A few decisions a reviewer might reasonably ask about:
 ## Setup
 
 ```bash
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
+python3 -m venv venv && source venv/bin/activate
+pip install .   # installs the pdfragen package and its dependencies
 cp .env.example .env   # defaults work for a local Ollama install
 
 # Ollama must be running with the model pulled:
